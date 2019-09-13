@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 import random
 import time
-
+from numba import jit
 
 random.seed(30)
 
@@ -12,13 +12,24 @@ Nx = 100
 def sigmoid(x):
   return 1 / (1 + math.exp(-x))
 
+@jit
+def create_random_examples(M):
+    X = np.zeros((Nx, M))
+    Y = np.zeros((Nx, M))
+    for m in range(M):
+        r = random.uniform(0.0, Nx - 1.0000000000001)
+        set_input_number_to_vector(r, X, m)
+        set_input_number_to_expected_result(r, Y, m)
+    return X, Y
+
+@jit
 def set_input_number_to_vector(number, result, m):
     floor = int(number)
     lower_part = number - floor
     upper_part = 1 - lower_part
     result[floor,m] = result[floor,m] + upper_part
     result[floor + 1,m] = result[floor + 1,m] + lower_part
-
+@jit
 def set_input_number_to_expected_result(number, result, m):
     index = round(number)
     result[index,m] = result[index,m] + 1.0
@@ -32,7 +43,6 @@ def accumulated_error(sample, estimate):
 
 def evaluate_network(xi,ws,bs):
     yh = [0.0] * Nx
-
     for i in range(Nx):
         yh[i] = bs[i]
         for j in range(Nx):
@@ -52,24 +62,20 @@ def train():
     B = tf.get_variable("B", [Nx, 1], initializer=tf.zeros_initializer())
 
     Yhat = tf.add(tf.matmul(W, X), B)
-    error_value = tf.reduce_mean(tf.subtract(Yhat, Y)**2)
+    error_value = tf.reduce_mean(tf.abs(tf.subtract(Yhat, Y)))
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=LC).minimize(error_value)
+
 
     init = tf.global_variables_initializer()
     with tf.Session() as sess:
         sess.run(init)
         for p in range(LEARNING_PASSES):
-            X_input = np.zeros((Nx, M))
-            Y_input = np.zeros((Nx, M))
-            for m in range(M):
-                r = random.uniform(0.0, Nx - 1.0000000000001)
-                set_input_number_to_vector(r, X_input, m)
-                set_input_number_to_expected_result(r, Y_input, m)
 
+            X_input, Y_input = create_random_examples(M)
             _ , cost = sess.run([optimizer,error_value], feed_dict={ X: X_input, Y: Y_input })
 
-            if p % 200 == 1:
-                print("Vectorized error = " + str(cost))
+            #if p % 200 == 1:
+            #    print("Vectorized error = " + str(cost))
         Wout = sess.run(W)
         Bout = sess.run(B)
     return Wout,Bout
@@ -88,10 +94,9 @@ def main():
         random_number = (random.uniform(0.0, Nx - 1.0000000000001))
         X_test = np.zeros((Nx, 1))
         set_input_number_to_vector(random_number,X_test,0)
-        result_vector_vectorized = np.dot(W,X_test) + B
+        result_vector = np.dot(W,X_test) + B
 
         expected_result = round(random_number)
-        result_vector = result_vector_vectorized#evaluate_network(xi,ws,bs)
 
         max = -1000.0
         max_index = -1
