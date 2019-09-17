@@ -6,7 +6,7 @@
 const int LEARNING_PASSES = 5000;
 const int M = 1000;
 const float LC = 0.01f;
-const int Nx = 1000;
+const int Nx = 100;
 
 void set_input_number_to_vector(float number, Eigen::MatrixXf &result, int m) {
     int floor = std::floor(number);
@@ -68,7 +68,6 @@ void train(Eigen::MatrixXf &W, Eigen::VectorXf &B)
 
 int main()
 {
-    Eigen::setNbThreads(20);
     std::cout << "nbThreads " << Eigen::nbThreads() << std::endl;
 
     std::random_device rd;
