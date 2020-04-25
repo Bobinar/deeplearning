@@ -1,11 +1,9 @@
-import math
+import time
+import h5py
 import numpy as np
 import tensorflow as tf
-import random
-import time
-from numba import jit
 
-import h5py
+
 
 def load_dataset():
     train_dataset = h5py.File('../../datasets/train_catvnoncat.h5', "r")
@@ -23,8 +21,6 @@ def load_dataset():
 
     return train_set_x_orig, train_set_y_orig, test_set_x_orig, test_set_y_orig, classes
 
-
-random.seed(30)
 
 def relu(X):
     return np.fmax(X,0)
@@ -58,21 +54,22 @@ def train(X_input,Y_input):
 
     HIDDEN_LAYER_SIZE = 10
 
-    X = tf.placeholder(tf.float32, shape=X_input.shape)
-    Y = tf.placeholder(tf.float32, shape=Y_input.shape)
+    X = tf.compat.v1.placeholder(tf.float32, shape=X_input.shape)
+    Y = tf.compat.v1.placeholder(tf.float32, shape=Y_input.shape)
 
-    W1 = tf.get_variable("W1", [HIDDEN_LAYER_SIZE,Nx], initializer = tf.initializers.random_uniform(minval=-0.01,maxval=0.01,seed = 30))
-    B1 = tf.get_variable("B1", [HIDDEN_LAYER_SIZE, 1], initializer=tf.zeros_initializer())
-    W2 = tf.get_variable("W2", [1,HIDDEN_LAYER_SIZE], initializer = tf.initializers.random_uniform(minval=-0.01,maxval=0.01,seed = 20))
-    B2 = tf.get_variable("B2", [1, 1], initializer=tf.zeros_initializer())
+    W1 = tf.compat.v1.get_variable("W1", [HIDDEN_LAYER_SIZE,Nx], initializer = tf.compat.v1.initializers.random_uniform(minval=-0.01,maxval=0.01,seed = 30))
+    B1 = tf.compat.v1.get_variable("B1", [HIDDEN_LAYER_SIZE, 1], initializer=tf.zeros_initializer())
+    W2 = tf.compat.v1.get_variable("W2", [1,HIDDEN_LAYER_SIZE], initializer = tf.compat.v1.initializers.random_uniform(minval=-0.01,maxval=0.01,seed = 20))
+    B2 = tf.compat.v1.get_variable("B2", [1, 1], initializer=tf.zeros_initializer())
 
     A1 = tf.nn.relu(tf.add(tf.matmul(W1, X), B1))
     Yhat = tf.sigmoid(tf.add(tf.matmul(W2,A1),B2))
     error_value = tf.reduce_mean(tf.subtract(Yhat, Y)**2)
-    optimizer = tf.train.AdamOptimizer(learning_rate=LC).minimize(error_value)
 
-    init = tf.global_variables_initializer()
-    with tf.Session() as sess:
+    optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=LC).minimize(error_value)
+
+    init = tf.compat.v1.global_variables_initializer()
+    with tf.compat.v1.Session() as sess:
         sess.run(init)
         for p in range(LEARNING_PASSES):
 
@@ -107,6 +104,7 @@ def test_on_dataset(X,Y,W1,B1,W2,B2):
     print("FAILURE RATE " + str(failure_rate * 100.0) + " %")
 
 def main():
+    tf.compat.v1.disable_eager_execution()
     train_set_x_orig, train_set_y_orig, test_set_x_orig, test_set_y_orig, classes = load_dataset()
     train_set_x_flatten = (train_set_x_orig.reshape(train_set_x_orig.shape[0], -1).T / 255.) -0.5
     test_set_x_flatten = (test_set_x_orig.reshape(test_set_x_orig.shape[0], -1).T /255.) - 0.5
