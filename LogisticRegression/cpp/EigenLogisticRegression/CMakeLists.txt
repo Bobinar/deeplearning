@@ -31,7 +31,8 @@ if (OpenMP_FOUND)
 endif()
 
 
-
 add_executable(EigenLogisticRegression src/main.cpp)
+
+target_compile_options(EigenLogisticRegression PUBLIC -march=native)
 
 target_link_libraries(EigenLogisticRegression PRIVATE OpenMP::OpenMP)
