@@ -69,11 +69,7 @@ def train():
         dW2 = np.dot(error_vector, A1.T) / M
         dB2 = np.sum(error_vector, axis=1).reshape(B2.shape) / M
 
-        inverse_W2 = np.linalg.inv(W2)
-
-        YminusBias = Y - B2
-        A1_desired = np.dot(inverse_W2,YminusBias)
-        error_vector_first_layer = A1 - A1_desired
+        error_vector_first_layer = np.dot(W2.T, error_vector)
         dW1 = np.dot(error_vector_first_layer, X.T) /M
         dB1 = np.sum(error_vector_first_layer, axis=1).reshape(B1.shape) / M
 
